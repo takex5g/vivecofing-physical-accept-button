@@ -2,6 +2,8 @@
 
 M5 Atom S3 を使って Claude Code の確認プロンプトに物理ボタンで応答するシステム。
 
+[![Tweet](docs/tweet_screenshot.png)](https://x.com/takex5g/status/2017091276081156265)
+
 ```
 [M5 Atom S3] --HTTP POST--> [Python Server] --tmux send-keys--> [Claude Code]
 ```
