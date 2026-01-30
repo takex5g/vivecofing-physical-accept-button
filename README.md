@@ -10,11 +10,16 @@ M5 Atom S3 を使って Claude Code の確認プロンプトに物理ボタン�
 
 ```
 .
-├── platformio.ini      # PlatformIO設定
+├── platformio.ini          # PlatformIO設定
 ├── src/
-│   └── main.cpp        # M5 Atom S3用コード
-├── accept_server.py    # HTTPサーバー（macOS側）
-├── start_claude.sh     # tmux起動スクリプト
+│   └── main.cpp            # M5 Atom S3用コード
+├── include/
+│   └── credentials.h.example  # 認証情報テンプレート
+├── accept_server.py        # HTTPサーバー（macOS側）
+├── start_claude.sh         # tmux起動スクリプト
+├── test/
+│   ├── test_server.py      # サーバーテスト
+│   └── test_integration.sh # 統合テスト
 └── README.md
 ```
 
@@ -35,14 +40,23 @@ python3 accept_server.py
 
 ### 2. M5 Atom S3の準備（PlatformIO）
 
-1. `src/main.cpp` の設定を編集:
-   ```cpp
-   const char* WIFI_SSID = "YOUR_WIFI_SSID";        // WiFi SSID
-   const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"; // WiFi パスワード
-   const char* SERVER_HOST = "192.168.1.100";       // macOSのIPアドレス
+1. 認証情報ファイルを作成:
+
+   ```bash
+   cp include/credentials.h.example include/credentials.h
    ```
 
-2. ビルド＆アップロード:
+2. `include/credentials.h` を編集:
+
+   ```cpp
+   #define WIFI_SSID "YOUR_WIFI_SSID"          // WiFi SSID
+   #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"   // WiFi パスワード
+   #define SERVER_HOST "192.168.1.100"          // macOSのIPアドレス
+   #define SERVER_PORT 8080                     // サーバーポート
+   ```
+
+3. ビルド＆アップロード:
+
    ```bash
    # ビルド
    pio run
@@ -68,16 +82,16 @@ ifconfig | grep "inet "
 
 1. tmuxセッションでClaude Codeを起動（`./start_claude.sh`）
 2. HTTPサーバーを起動（`python3 accept_server.py`）
-3. M5 Atom S3のボタンを押す → Claude Codeに「y」が送信される
+3. M5 Atom S3のボタンを押す → Claude Codeに「Enter」が送信される（Accept）
 
 ## APIエンドポイント
 
-| メソッド | パス | 説明 |
-|---------|------|------|
-| `POST` | `/accept` | 「y」を送信（Accept） |
-| `POST` | `/reject` | 「n」を送信（Reject） |
-| `POST` | `/key` | カスタムキーを送信 |
-| `GET` | `/status` | サーバー状態を確認 |
+| メソッド | パス      | 説明                  |
+| -------- | --------- | --------------------- |
+| `POST`   | `/accept` | 「Enter」を送信（Accept） |
+| `POST`   | `/reject` | 「n」を送信（Reject） |
+| `POST`   | `/key`    | カスタムキーを送信    |
+| `GET`    | `/status` | サーバー状態を確認    |
 
 ### テスト
 
@@ -99,13 +113,13 @@ curl http://localhost:8080/status
 
 ## LED表示（M5 Atom S3）
 
-| 色 | 状態 |
-|----|------|
-| 緑 | 準備完了 |
-| 黄 | WiFi接続中 |
-| 青 | 送信中 |
-| シアン | 成功 |
-| 赤 | エラー |
+| 色     | 状態       |
+| ------ | ---------- |
+| 緑     | 準備完了   |
+| 黄     | WiFi接続中 |
+| 青     | 送信中     |
+| シアン | 成功       |
+| 赤     | エラー     |
 
 ## tmuxコマンド
 
@@ -126,30 +140,20 @@ tmux ls
 ## トラブルシューティング
 
 ### 「Session not found」エラー
+
 → `./start_claude.sh` でtmuxセッションを先に起動する
 
 ### M5 Atom S3が接続できない
+
 → macOSのファイアウォール設定を確認（ポート8080を許可）
 
 ### キーが送信されない
+
 → tmuxセッション名が「claude」であることを確認
 
 ```bash
 # セッション確認
 tmux ls
-```
-
-## PoE対応（M5 Atom PoE）
-
-M5 Atom PoEを使う場合は、WiFi設定を削除してEthernet設定に変更:
-
-```cpp
-#include <ETH.h>
-
-void setup() {
-    ETH.begin();
-    // ... 以降同様
-}
 ```
 
 ## ライセンス
